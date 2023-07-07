@@ -6,7 +6,7 @@ import Card from "react-bootstrap/Card";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import DateFilter from "./DateFilter";
+import LikeButton from "./LikeButton";
 import { DatePicker, Space } from "antd";
 import moment from "moment";
 
@@ -20,6 +20,7 @@ function App() {
   const getTweetsDataWithFetch = async () => {
     const response = await fetch(tweetsApiData);
     const jsonData = await response.json();
+
     setTweetData(jsonData);
   };
 
@@ -27,30 +28,58 @@ function App() {
     getTweetsDataWithFetch();
   }, []);
 
-  const dateChange = (value) => {
+  const dateChange = async (value, dateString) => {
+    let start_date = dateString[0];
+    let end_date = dateString[1];
 
-    let start_date = moment(value[0].$d).format("DD/MM/YYYY");
-    let end_date = moment(value[1].$d).format("DD/MM/YYYY")
+    const response = await fetch(tweetsApiData);
+    const entireTweetData = await response.json();
+
+    // start_date = moment().format(start_date, "YYYY-MM-DD");
+    // end_date = moment().format(end_date, "YYYY-MM-DD");
+
+    console.log("start_date: " + start_date);
+    console.log("end_date: " + end_date);
+    // console.log(moment('2019-06-15').isBetween(start_date, end_date));
 
     let filterArray = [];
-
-    for (let i = 0; i < tweetData.length; i++) {
-      console.log(tweetData[i]);
+    for (let i = 0; i < entireTweetData.length; i++) {
+      let curr_date = moment(entireTweetData[i].publishedDate).format(
+        "YYYY-MM-DD"
+      );
+      if (moment(curr_date).isBetween(start_date, end_date)) {
+        console.log(curr_date);
+        filterArray.push(entireTweetData[i]);
+      }
     }
+    console.log(filterArray);
+    setTweetData(filterArray);
   };
 
   return (
     <div className="App">
       <h1>LabelBlind Tweets Assignment</h1>
       <Space direction="vertical" size={12}>
-        <RangePicker onChange={dateChange} />
+        <RangePicker
+          defaultValue={[
+            moment("2010-01-01", "YYYY-MM-DD"),
+            moment("2019-12-31", "YYYY-MM-DD"),
+          ]}
+          format={"YYYY-MM-DD"}
+          onChange={dateChange}
+        />
       </Space>
       <Container>
+        
         <Row lg={3}>
+          
           {tweetData.map((tweet) => {
             return (
-              <Col className="d-flex">
+              
+              <Col className="d-flex" key={tweet._id}>
+                
                 <div className="CardDiv">
+                  
                   <Card style={{ width: "18rem" }}>
                     <Card.Img
                       className="CardImg"
@@ -69,7 +98,9 @@ function App() {
                       <Card.Text>
                         {" "}
                         <span className="text_fields">Tweet Text:</span>{" "}
-                        {tweet.text ? tweet.text : "--"}
+                        {tweet.text
+                          ? tweet.text.substring(0, 80) + " ..."
+                          : "--"}
                       </Card.Text>
                       <Card.Text>
                         {" "}
@@ -87,8 +118,12 @@ function App() {
                       </Card.Text>
                       <Card.Text>
                         {" "}
-                        <span className="text_fields">Date Published:</span>{" "}
-                        {tweet.publishedDate ? moment(tweet.publishedDate).format('DD/MM/YYYY') : "--"}
+                        <span className="text_fields">
+                          Date Published:
+                        </span>{" "}
+                        {tweet.publishedDate
+                          ? moment(tweet.publishedDate).format("YYYY-MM-DD")
+                          : "--"}
                       </Card.Text>
                       <Button
                         variant="primary"
